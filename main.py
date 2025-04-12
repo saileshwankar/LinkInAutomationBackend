@@ -6,5 +6,9 @@ CORS(app)  # Enable CORS for all routes
 
 app.register_blueprint(linkin_automation_bp)
 
+@app.route('/')
+def home():
+    return "LinkedIn Automation Flask Backend is Running ✅"
+
 if __name__ == "__main__":
     app.run(debug=False, port=8080)
