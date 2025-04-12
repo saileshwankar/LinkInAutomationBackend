@@ -1,0 +1,10 @@
+Flask
+selenium
+webdriver-manager
+firebase-admin
+
+gunicorn  # If deploying on a production server
+flask-cors
+selenium
+webdriver-manager
+firebase-admin
