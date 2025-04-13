@@ -8,9 +8,3 @@ gunicorn  # If deploying on a production server
 flask-cors
 selenium
 webdriver-manager
-libx11-dev
-libxss1
-libappindicator3-1
-libnss3
-libgdk-pixbuf2.0-0
-libgbm1
