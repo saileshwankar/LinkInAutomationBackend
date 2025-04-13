@@ -31,25 +31,25 @@ RUN apt-get update && apt-get install -y \
 
 # Install Google Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get update && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb && \
     rm google-chrome-stable_current_amd64.deb
 
-# Install ChromeDriver (matching Chrome version)
-RUN bash -c '\
-  CHROME_VERSION=$(google-chrome --version | awk "{print \$3}" | cut -d "." -f 1) && \
-  DRIVER_VERSION=$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}) && \
-  wget -q https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip && \
-  unzip chromedriver_linux64.zip && \
-  mv chromedriver /usr/local/bin/chromedriver && \
-  chmod +x /usr/local/bin/chromedriver && \
-  rm chromedriver_linux64.zip \
-'
+# Install matching ChromeDriver
+RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d '.' -f 1) && \
+    echo "Detected Chrome major version: $CHROME_VERSION" && \
+    DRIVER_VERSION=$(curl -s -f "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}") && \
+    echo "Using ChromeDriver version: $DRIVER_VERSION" && \
+    curl -f -s -O "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/chromedriver && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm chromedriver_linux64.zip
 
+# Add env vars
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV PATH=$PATH:/usr/local/bin/chromedriver
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
 # Install Python packages
