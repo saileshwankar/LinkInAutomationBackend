@@ -1,11 +1,15 @@
+# Base image with Python
 FROM python:3.12-slim
 
-# Install Chrome + dependencies
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary dependencies for Chrome and Selenium
 RUN apt-get update && apt-get install -y \
     wget \
-    unzip \
-    curl \
     gnupg \
+    curl \
+    unzip \
     ca-certificates \
     fonts-liberation \
     libappindicator3-1 \
@@ -21,35 +25,43 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
+    libvulkan1 \
     xdg-utils \
-    chromium \
-    && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome manually if needed (optional if not using chromium)
+# Install Google Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt install -y ./google-chrome-stable_current_amd64.deb && \
     rm google-chrome-stable_current_amd64.deb
 
-# Detect Chrome version and install matching ChromeDriver
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
-    CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/latest-patch-versions-per-build-with-downloads.json" | \
-    python3 -c "import sys, json; data=json.load(sys.stdin); print(data['builds']['$CHROME_VERSION']['version'])") && \
-    wget -q -O /tmp/chromedriver.zip "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin && \
-    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
+# Install ChromeDriver (match your installed Chrome version)
+RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d '.' -f 1) && \
+    DRIVER_VERSION=$(wget -qO- "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") && \
+    wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
-    rm -rf /tmp/chromedriver.zip /usr/local/bin/chromedriver-linux64
+    rm chromedriver_linux64.zip
 
-# Set environment variables for headless
+# Set environment variables for Selenium to use Chrome in headless mode
 ENV CHROME_BIN=/usr/bin/google-chrome
-ENV PATH="/usr/local/bin:$PATH"
+ENV PATH=$PATH:/usr/local/bin/chromedriver
 
-# Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy your code
-COPY . /app
+# Set work directory
 WORKDIR /app
 
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000"]
+# Copy requirements first for caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire project
+COPY . .
+
+# Expose the port your Flask app runs on
+EXPOSE 5000
+
+# Command to run your Flask app (adjust filename if needed)
+CMD ["python", "app.py"]
