@@ -2,14 +2,13 @@ FROM python:3.12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
-    gnupg \
     unzip \
+    gnupg \
     xz-utils \
-    ca-certificates \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -26,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libvulkan1 \
     xdg-utils \
+    ca-certificates \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -35,14 +35,16 @@ RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd6
     apt-get install -y ./google-chrome-stable_current_amd64.deb && \
     rm google-chrome-stable_current_amd64.deb
 
-# Install ChromeDriver (version matching Chrome)
-RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d '.' -f 1) && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}") && \
-    wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
-    unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/local/bin/chromedriver && \
-    chmod +x /usr/local/bin/chromedriver && \
-    rm chromedriver_linux64.zip
+# Install ChromeDriver (matching Chrome version)
+RUN bash -c '\
+  CHROME_VERSION=$(google-chrome --version | awk "{print \$3}" | cut -d "." -f 1) && \
+  DRIVER_VERSION=$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}) && \
+  wget -q https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip && \
+  unzip chromedriver_linux64.zip && \
+  mv chromedriver /usr/local/bin/chromedriver && \
+  chmod +x /usr/local/bin/chromedriver && \
+  rm chromedriver_linux64.zip \
+'
 
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV PATH=$PATH:/usr/local/bin/chromedriver
@@ -50,15 +52,15 @@ ENV PATH=$PATH:/usr/local/bin/chromedriver
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy project files
 COPY . .
 
-# Expose Flask port
+# Expose port if needed
 EXPOSE 5000
 
-# Start Flask app
+# Start the Flask app
 CMD ["python", "app.py"]
