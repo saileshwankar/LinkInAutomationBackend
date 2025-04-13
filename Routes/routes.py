@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from APIFile.linkin_automation_request import connect_on_linkin
-from APIFile.contact_detail_store import submit_linkin_contact_data
+from APIFile.contact_detail_store import submit_linkin_contact_data,submit_automation_request
 linkin_automation_bp = Blueprint("linkin_automation", __name__)
 
 
@@ -14,3 +14,8 @@ def connect_on_linkin_api():
 @linkin_automation_bp.route("/linkedin_contact_detail", methods=["POST"])
 def submit_linkin_contact_data_api():
     return submit_linkin_contact_data()
+
+
+@linkin_automation_bp.route("/submit_automation_request", methods=["POST"])
+def submit_automation_request_api():
+    return submit_automation_request()
