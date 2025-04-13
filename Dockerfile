@@ -9,7 +9,8 @@ USER root
 RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
 
 # Optional: Set Chrome flags via ENV (can be used inside your app)
-ENV CHROME_OPTIONS="--no-sandbox --disable-dev-shm-usage --headless=new --disable-gpu --remote-debugging-port=9222"
+ENV CHROME_OPTIONS="--no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --headless=new"
+USER seluser
 
 # Copy requirements and install
 COPY requirements.txt .

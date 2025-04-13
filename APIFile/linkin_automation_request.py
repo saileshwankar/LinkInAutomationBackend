@@ -17,6 +17,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 logging.basicConfig(level=logging.INFO)
 
+
+
 def setup_driver():
     chrome_options = Options()
 
