@@ -10,35 +10,26 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import threading
 import logging
-import os
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+
+
 logging.basicConfig(level=logging.INFO)
-
-
 
 def setup_driver():
     chrome_options = Options()
-
-    # Load Chrome options from ENV
-    chrome_flags = os.getenv("CHROME_OPTIONS", "").split()
-    for flag in chrome_flags:
-        chrome_options.add_argument(flag)
-
-    # Other safe options
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
 
-    # Set up driver
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    # Anti-bot trick
+    # Hide the webdriver property to evade detection
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
         "source": "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })"
     })

@@ -4,31 +4,25 @@ FROM selenium/standalone-chrome:latest
 # Set working directory
 WORKDIR /app
 
-# Switch to root for package installation
+# Install Python & pip
 USER root
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
 
-# Python is included, but update just in case
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+# Set Chrome flags via environment variable
+ENV CHROME_OPTIONS="--no-sandbox --disable-dev-shm-usage --headless=new --disable-gpu"
 
-# Set Chrome options for headless (optional but useful for consistency)
-ENV CHROME_OPTIONS="--no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --headless=new"
-
-# Switch back to seluser (as required by base image)
-USER seluser
-
-# Copy and install Python requirements
+# Copy requirements and install
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy your app code
+# Copy the rest of the app
 COPY . .
 
-# Set environment for Flask
+# Flask environment settings
 ENV FLASK_APP=wsgi.py
 ENV FLASK_ENV=production
 
-# Expose Flask port
+# Expose port
 EXPOSE 5000
 
 # Start Flask app
